@@ -1,0 +1,2361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CropGuardAI - Plant Health Assessment</title>
+  <style>
+    /* ============================================
+       ROOT & DESIGN TOKENS
+       ============================================ */
+    :root {
+      --color-forest-green: #245C3C;
+      --color-secondary-green: #4B9B61;
+      --color-light-green: #EAF3E7;
+      --color-bg: #F7FAF5;
+      --color-white: #FFFFFF;
+      --color-text-main: #183426;
+      --color-text-secondary: #66756C;
+      --color-border: #E0E8E3;
+      --color-error: #D32F2F;
+      --color-success: #388E3C;
+      --color-warning: #F57C00;
+
+      --spacing-xs: 0.5rem;
+      --spacing-sm: 1rem;
+      --spacing-md: 1.5rem;
+      --spacing-lg: 2rem;
+      --spacing-xl: 3rem;
+      --spacing-2xl: 4rem;
+
+      --radius-sm: 0.5rem;
+      --radius-md: 1rem;
+      --radius-lg: 1.5rem;
+
+      --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+      --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.1);
+
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      --font-size-sm: 0.875rem;
+      --font-size-base: 1rem;
+      --font-size-lg: 1.125rem;
+      --font-size-xl: 1.25rem;
+      --font-size-2xl: 1.5rem;
+      --font-size-3xl: 2rem;
+      --font-size-4xl: 2.5rem;
+      --font-weight-regular: 400;
+      --font-weight-medium: 500;
+      --font-weight-semibold: 600;
+      --font-weight-bold: 700;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      font-size: var(--font-size-base);
+      line-height: 1.6;
+      color: var(--color-text-main);
+      background-color: var(--color-bg);
+    }
+
+    /* ============================================
+       GLOBAL STYLES
+       ============================================ */
+    a {
+      color: var(--color-secondary-green);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    a:hover {
+      color: var(--color-forest-green);
+    }
+
+    button {
+      font-family: var(--font-sans);
+      cursor: pointer;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-base);
+      font-weight: var(--font-weight-medium);
+      transition: all 0.2s;
+    }
+
+    input,
+    textarea,
+    select {
+      font-family: var(--font-sans);
+      font-size: var(--font-size-base);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--spacing-sm);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--color-secondary-green);
+      box-shadow: 0 0 0 3px rgba(75, 155, 97, 0.1);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--spacing-md);
+    }
+
+    .section {
+      padding: var(--spacing-2xl) 0;
+    }
+
+    h1 {
+      font-size: var(--font-size-4xl);
+      font-weight: var(--font-weight-bold);
+      line-height: 1.2;
+      margin-bottom: var(--spacing-md);
+    }
+
+    h2 {
+      font-size: var(--font-size-3xl);
+      font-weight: var(--font-weight-bold);
+      line-height: 1.2;
+      margin-bottom: var(--spacing-lg);
+    }
+
+    h3 {
+      font-size: var(--font-size-2xl);
+      font-weight: var(--font-weight-semibold);
+      margin-bottom: var(--spacing-md);
+    }
+
+    h4 {
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-semibold);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    p {
+      color: var(--color-text-secondary);
+      line-height: 1.7;
+    }
+
+    .text-small {
+      font-size: var(--font-size-sm);
+    }
+
+    .text-muted {
+      color: var(--color-text-secondary);
+    }
+
+    /* ============================================
+       CARD STYLES
+       ============================================ */
+    .card {
+      background: var(--color-white);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-md);
+      transition: box-shadow 0.3s, transform 0.3s;
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-lg);
+    }
+
+    /* ============================================
+       BUTTON STYLES
+       ============================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-xs);
+      padding: var(--spacing-sm) var(--spacing-lg);
+      border-radius: var(--radius-md);
+      font-weight: var(--font-weight-medium);
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background-color: var(--color-secondary-green);
+      color: var(--color-white);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--color-forest-green);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      color: var(--color-secondary-green);
+      border: 1.5px solid var(--color-secondary-green);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--color-light-green);
+    }
+
+    .btn-small {
+      padding: 0.5rem 1rem;
+      font-size: var(--font-size-sm);
+    }
+
+    .btn-block {
+      display: flex;
+      width: 100%;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ============================================
+       FORM STYLES
+       ============================================ */
+    .form-group {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    label {
+      display: block;
+      font-weight: var(--font-weight-medium);
+      margin-bottom: var(--spacing-xs);
+      color: var(--color-text-main);
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-base);
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .form-error {
+      color: var(--color-error);
+      font-size: var(--font-size-sm);
+      margin-top: 0.25rem;
+    }
+
+    .form-success {
+      color: var(--color-success);
+      font-size: var(--font-size-sm);
+      margin-top: 0.25rem;
+    }
+
+    /* ============================================
+       CHECKBOX & MULTI-SELECT
+       ============================================ */
+    .checkbox-group,
+    .radio-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: var(--spacing-md);
+    }
+
+    .checkbox-item,
+    .radio-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    input[type="checkbox"],
+    input[type="radio"] {
+      width: 1.25rem;
+      height: 1.25rem;
+      cursor: pointer;
+      accent-color: var(--color-secondary-green);
+    }
+
+    .checkbox-item label,
+    .radio-item label {
+      margin-bottom: 0;
+      cursor: pointer;
+    }
+
+    /* ============================================
+       HEADER & NAVIGATION
+       ============================================ */
+    header {
+      background-color: var(--color-white);
+      border-bottom: 1px solid var(--color-border);
+      padding: var(--spacing-md) 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-size: var(--font-size-xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-forest-green);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+
+    nav {
+      display: flex;
+      gap: var(--spacing-lg);
+    }
+
+    nav a {
+      color: var(--color-text-main);
+      font-weight: var(--font-weight-medium);
+      transition: color 0.2s;
+    }
+
+    nav a:hover {
+      color: var(--color-secondary-green);
+    }
+
+    @media (max-width: 768px) {
+      nav {
+        display: none;
+      }
+    }
+
+    /* ============================================
+       HERO SECTION
+       ============================================ */
+    .hero {
+      background: linear-gradient(135deg, var(--color-bg) 0%, #FFFFFF 100%);
+      padding: var(--spacing-2xl) 0;
+    }
+
+    .hero-content {
+      max-width: 700px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .hero h1 {
+      color: var(--color-forest-green);
+      margin-bottom: var(--spacing-lg);
+      line-height: 1.3;
+    }
+
+    .hero p {
+      font-size: var(--font-size-lg);
+      margin-bottom: var(--spacing-xl);
+      line-height: 1.8;
+    }
+
+    .hero-cta {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-2xl);
+    }
+
+    .hero-cta .btn {
+      padding: var(--spacing-md) var(--spacing-2xl);
+      font-size: var(--font-size-lg);
+    }
+
+    @media (min-width: 768px) {
+      .hero-cta {
+        flex-direction: row;
+        justify-content: center;
+      }
+
+      .hero-cta .btn {
+        min-width: 200px;
+      }
+    }
+
+    .trust-indicators {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-2xl);
+      justify-content: center;
+      padding: var(--spacing-lg);
+      background-color: var(--color-light-green);
+      border-radius: var(--radius-lg);
+    }
+
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+      font-weight: var(--font-weight-medium);
+    }
+
+    @media (min-width: 768px) {
+      .trust-indicators {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+
+      .trust-item {
+        flex: 1;
+        min-width: 200px;
+      }
+    }
+
+    /* ============================================
+       HOW IT WORKS
+       ============================================ */
+    .how-it-works {
+      background-color: var(--color-white);
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--spacing-lg);
+      margin-top: var(--spacing-2xl);
+    }
+
+    .step-card {
+      background: var(--color-white);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      text-align: center;
+      transition: all 0.3s;
+    }
+
+    .step-card:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-4px);
+    }
+
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 3rem;
+      height: 3rem;
+      background-color: var(--color-light-green);
+      color: var(--color-forest-green);
+      border-radius: 50%;
+      font-weight: var(--font-weight-bold);
+      font-size: var(--font-size-xl);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .step-card h3 {
+      color: var(--color-forest-green);
+    }
+
+    /* ============================================
+       WIZARD STEPPER
+       ============================================ */
+    .wizard-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .wizard-header {
+      background-color: var(--color-white);
+      padding: var(--spacing-lg);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .step-indicator {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: var(--spacing-md);
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 4px;
+      background-color: var(--color-border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background-color: var(--color-secondary-green);
+      transition: width 0.3s;
+    }
+
+    .wizard-body {
+      background-color: var(--color-white);
+      padding: var(--spacing-lg);
+      min-height: 400px;
+    }
+
+    .wizard-footer {
+      background-color: var(--color-white);
+      padding: var(--spacing-lg);
+      border-top: 1px solid var(--color-border);
+      border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+      display: flex;
+      gap: var(--spacing-md);
+      justify-content: space-between;
+    }
+
+    .wizard-nav {
+      display: flex;
+      gap: var(--spacing-md);
+      width: 100%;
+    }
+
+    .wizard-nav .btn {
+      flex: 1;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* ============================================
+       RESULTS DISPLAY
+       ============================================ */
+    .results-container {
+      background-color: var(--color-white);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-xl);
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .result-card {
+      background: linear-gradient(135deg, var(--color-light-green) 0%, #F0FBF3 100%);
+      border: 1px solid #D0E8D0;
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .result-label {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .result-value {
+      font-size: var(--font-size-2xl);
+      font-weight: var(--font-weight-bold);
+      color: var(--color-forest-green);
+    }
+
+    .severity-mild {
+      color: #4CAF50;
+    }
+
+    .severity-moderate {
+      color: #FF9800;
+    }
+
+    .severity-severe {
+      color: #F44336;
+    }
+
+    .recommendations {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-lg);
+    }
+
+    .recommendation-box {
+      background-color: var(--color-bg);
+      padding: var(--spacing-md);
+      border-radius: var(--radius-md);
+      border-left: 4px solid var(--color-secondary-green);
+    }
+
+    .recommendation-box h4 {
+      color: var(--color-forest-green);
+    }
+
+    /* ============================================
+       TESTIMONIALS
+       ============================================ */
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: var(--spacing-lg);
+      margin-top: var(--spacing-2xl);
+    }
+
+    .testimonial-card {
+      background: var(--color-white);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      box-shadow: var(--shadow-md);
+    }
+
+    .stars {
+      display: flex;
+      gap: 2px;
+      margin-bottom: var(--spacing-md);
+      color: #FFB800;
+    }
+
+    .testimonial-text {
+      font-style: italic;
+      margin-bottom: var(--spacing-md);
+      color: var(--color-text-main);
+    }
+
+    .testimonial-author {
+      font-weight: var(--font-weight-semibold);
+      color: var(--color-forest-green);
+    }
+
+    .testimonial-role {
+      font-size: var(--font-size-sm);
+      color: var(--color-text-secondary);
+    }
+
+    .testimonial-label {
+      font-size: var(--font-size-xs);
+      background-color: var(--color-light-green);
+      color: var(--color-forest-green);
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border-radius: var(--radius-sm);
+      display: inline-block;
+      margin-bottom: var(--spacing-md);
+      font-weight: var(--font-weight-medium);
+    }
+
+    /* ============================================
+       FAQ / ACCORDION
+       ============================================ */
+    .faq-container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .faq-item {
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--spacing-md);
+      overflow: hidden;
+      background-color: var(--color-white);
+    }
+
+    .faq-button {
+      width: 100%;
+      text-align: left;
+      padding: var(--spacing-md) var(--spacing-lg);
+      background-color: var(--color-white);
+      border: none;
+      cursor: pointer;
+      font-size: var(--font-size-base);
+      font-weight: var(--font-weight-medium);
+      color: var(--color-text-main);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color 0.2s;
+    }
+
+    .faq-button:hover {
+      background-color: var(--color-light-green);
+    }
+
+    .faq-button.active {
+      background-color: var(--color-light-green);
+      color: var(--color-forest-green);
+    }
+
+    .faq-toggle {
+      display: inline-block;
+      transition: transform 0.3s;
+      font-size: var(--font-size-lg);
+    }
+
+    .faq-button.active .faq-toggle {
+      transform: rotate(180deg);
+    }
+
+    .faq-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      background-color: var(--color-bg);
+    }
+
+    .faq-content.active {
+      max-height: 500px;
+    }
+
+    .faq-text {
+      padding: var(--spacing-lg);
+      color: var(--color-text-secondary);
+      line-height: 1.8;
+    }
+
+    /* ============================================
+       FOOTER
+       ============================================ */
+    footer {
+      background-color: var(--color-forest-green);
+      color: var(--color-white);
+      padding: var(--spacing-2xl) 0;
+      margin-top: var(--spacing-2xl);
+    }
+
+    .footer-content {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--spacing-2xl);
+      margin-bottom: var(--spacing-2xl);
+    }
+
+    .footer-section h4 {
+      color: var(--color-light-green);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .footer-section ul {
+      list-style: none;
+    }
+
+    .footer-section li {
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .footer-section a {
+      color: var(--color-light-green);
+      transition: color 0.2s;
+    }
+
+    .footer-section a:hover {
+      color: var(--color-white);
+    }
+
+    .footer-divider {
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      padding-top: var(--spacing-lg);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .disclaimer {
+      background-color: rgba(0, 0, 0, 0.2);
+      padding: var(--spacing-lg);
+      border-radius: var(--radius-md);
+      font-size: var(--font-size-sm);
+      line-height: 1.8;
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .footer-bottom {
+      text-align: center;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      padding-top: var(--spacing-lg);
+      font-size: var(--font-size-sm);
+    }
+
+    /* ============================================
+       MESSAGE BOXES
+       ============================================ */
+    .alert {
+      padding: var(--spacing-md);
+      border-radius: var(--radius-md);
+      margin-bottom: var(--spacing-md);
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+    }
+
+    .alert-error {
+      background-color: #FFEBEE;
+      border: 1px solid #FFCDD2;
+      color: var(--color-error);
+    }
+
+    .alert-success {
+      background-color: #E8F5E9;
+      border: 1px solid #C8E6C9;
+      color: var(--color-success);
+    }
+
+    .alert-warning {
+      background-color: #FFF3E0;
+      border: 1px solid #FFE0B2;
+      color: var(--color-warning);
+    }
+
+    /* ============================================
+       RESPONSIVE DESIGN
+       ============================================ */
+    @media (max-width: 768px) {
+      :root {
+        --font-size-4xl: 2rem;
+        --font-size-3xl: 1.75rem;
+        --font-size-2xl: 1.25rem;
+        --spacing-xl: 2rem;
+        --spacing-2xl: 2.5rem;
+      }
+
+      h1 {
+        font-size: var(--font-size-3xl);
+      }
+
+      .container {
+        padding: 0 var(--spacing-md);
+      }
+
+      .section {
+        padding: var(--spacing-xl) 0;
+      }
+
+      .hero {
+        padding: var(--spacing-xl) 0;
+      }
+
+      .hero h1 {
+        font-size: 2rem;
+      }
+
+      .hero p {
+        font-size: var(--font-size-base);
+      }
+
+      .checkbox-group,
+      .radio-group {
+        grid-template-columns: 1fr;
+      }
+
+      .results-container {
+        padding: var(--spacing-md);
+      }
+
+      .footer-content {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .btn {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: var(--font-size-sm);
+      }
+
+      .wizard-nav {
+        flex-direction: column;
+      }
+
+      .wizard-nav .btn {
+        width: 100%;
+      }
+
+      .hero-cta {
+        flex-direction: column;
+      }
+
+      .logo {
+        font-size: var(--font-size-lg);
+      }
+    }
+
+    /* ============================================
+       SPINNER/LOADING
+       ============================================ */
+    .spinner {
+      display: inline-block;
+      width: 1.5rem;
+      height: 1.5rem;
+      border: 3px solid var(--color-border);
+      border-top: 3px solid var(--color-secondary-green);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ============================================
+       PREVENTION SECTION
+       ============================================ */
+    .prevention-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--spacing-lg);
+      margin-top: var(--spacing-lg);
+    }
+
+    .prevention-item {
+      display: flex;
+      gap: var(--spacing-md);
+    }
+
+    .prevention-icon {
+      flex-shrink: 0;
+      width: 2.5rem;
+      height: 2.5rem;
+      background-color: var(--color-light-green);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-forest-green);
+      font-weight: var(--font-weight-bold);
+    }
+
+    .prevention-content h4 {
+      color: var(--color-forest-green);
+      margin-bottom: var(--spacing-xs);
+    }
+  </style>
+
+  <script>
+    /* ============================================
+       CONFIGURATION - REPLACE WITH YOUR URLS
+       ============================================ */
+
+    // Deployed Google Apps Script URL
+    // Replace this with your actual deployed Apps Script URL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwyKejFpVF29flrHNyuAO29QW5NfiK_QnfS4-9YAwq7PgkoHoe25qj6fdyzhoGsQeZu3Q/exec";
+
+    // FastAPI disease detection endpoint
+    // Replace this with your actual FastAPI backend URL
+    // Example: "http://your-fastapi-server.com/detect"
+    const API_FASTAPI_ENDPOINT = "YOUR_FASTAPI_ENDPOINT_HERE";
+
+    /* ============================================
+       APP STATE MANAGEMENT
+       ============================================ */
+    const appState = {
+      currentStep: 1,
+      totalSteps: 6,
+      formData: {
+        name: "",
+        email: "",
+        phone: "",
+        latitude: "",
+        longitude: "",
+        manualLocation: "",
+        crop: "",
+        soil: "",
+        symptoms: [],
+        otherSymptoms: "",
+        fertiliserUsed: "",
+        fertiliserName: "",
+        fertiliserFrequency: "",
+        otherTreatment: "",
+        fileName: "",
+        fileType: "",
+        fileDataBase64: "",
+      },
+      locationObtained: false,
+      imageSelected: false,
+      isAnalyzing: false,
+      analysisResult: null,
+    };
+
+    /* ============================================
+       MAIN APPLICATION INITIALIZATION
+       ============================================ */
+    document.addEventListener("DOMContentLoaded", function () {
+      initializeApp();
+      attachEventListeners();
+    });
+
+    function initializeApp() {
+      const wizardContainer = document.getElementById("wizard-container");
+      const landingPage = document.getElementById("landing-page");
+
+      if (wizardContainer) {
+        wizardContainer.classList.add("hidden");
+      }
+      if (landingPage) {
+        landingPage.classList.remove("hidden");
+      }
+
+      // Restore saved form data from sessionStorage
+      restoreFormData();
+    }
+
+    /* ============================================
+       EVENT LISTENERS
+       ============================================ */
+    function attachEventListeners() {
+      // Landing page CTAs
+      document.getElementById("btn-check-plant")?.addEventListener("click", startAssessment);
+      document.getElementById("btn-how-it-works")?.addEventListener("click", scrollToHowItWorks);
+
+      // Wizard navigation
+      document.getElementById("btn-wizard-back")?.addEventListener("click", goToPreviousStep);
+      document.getElementById("btn-wizard-continue")?.addEventListener("click", goToNextStep);
+
+      // FAQ accordion
+      document.querySelectorAll(".faq-button").forEach((button) => {
+        button.addEventListener("click", toggleFaqItem);
+      });
+
+      // Image upload
+      document.getElementById("file-upload")?.addEventListener("change", handleFileUpload);
+      document.getElementById("btn-upload-photo")?.addEventListener("click", () => {
+        document.getElementById("file-upload").click();
+      });
+      document.getElementById("btn-use-camera")?.addEventListener("click", activateCamera);
+      document.getElementById("btn-retake-photo")?.addEventListener("click", resetImageSelection);
+
+      // Geolocation
+      document.getElementById("btn-use-location")?.addEventListener("click", requestGeolocation);
+
+      // Results actions
+      document.getElementById("btn-new-assessment")?.addEventListener("click", startNewAssessment);
+    }
+
+    /* ============================================
+       STEP NAVIGATION
+       ============================================ */
+    function startAssessment() {
+      document.getElementById("landing-page").classList.add("hidden");
+      document.getElementById("wizard-container").classList.remove("hidden");
+      showStep(1);
+    }
+
+    function goToNextStep() {
+      if (!validateCurrentStep()) {
+        return;
+      }
+      saveFormData();
+      if (appState.currentStep < appState.totalSteps) {
+        appState.currentStep++;
+        showStep(appState.currentStep);
+      } else {
+        // Final step - analyze
+        analyzeAndShowResults();
+      }
+    }
+
+    function goToPreviousStep() {
+      saveFormData();
+      if (appState.currentStep > 1) {
+        appState.currentStep--;
+        showStep(appState.currentStep);
+      }
+    }
+
+    function showStep(stepNumber) {
+      // Hide all steps
+      document.querySelectorAll(".wizard-step").forEach((el) => {
+        el.classList.add("hidden");
+      });
+
+      // Show current step
+      const stepEl = document.getElementById(`step-${stepNumber}`);
+      if (stepEl) {
+        stepEl.classList.remove("hidden");
+      }
+
+      // Update progress
+      updateProgressBar(stepNumber);
+
+      // Update buttons
+      const backBtn = document.getElementById("btn-wizard-back");
+      const continueBtn = document.getElementById("btn-wizard-continue");
+
+      if (backBtn) {
+        backBtn.style.display = stepNumber === 1 ? "none" : "inline-flex";
+      }
+
+      if (continueBtn) {
+        continueBtn.textContent =
+          stepNumber === appState.totalSteps ? "Analyze My Plant" : "Continue";
+      }
+
+      // Scroll to top
+      document.getElementById("wizard-container")?.scrollIntoView({ behavior: "smooth" });
+    }
+
+    function updateProgressBar(stepNumber) {
+      const progress = (stepNumber / appState.totalSteps) * 100;
+      document.querySelector(".progress-fill").style.width = progress + "%";
+      document.querySelector(".step-indicator").textContent =
+        `Step ${stepNumber} of ${appState.totalSteps}`;
+    }
+
+    /* ============================================
+       FORM VALIDATION & DATA HANDLING
+       ============================================ */
+    function validateCurrentStep() {
+      clearErrors();
+
+      switch (appState.currentStep) {
+        case 1: // Personal details
+          if (!getInputValue("name").trim()) {
+            showError("name", "Please enter your full name.");
+            return false;
+          }
+          if (!getInputValue("phone").trim()) {
+            showError("phone", "Please enter your phone number.");
+            return false;
+          }
+          if (getInputValue("email") && !isValidEmail(getInputValue("email"))) {
+            showError("email", "Please enter a valid email address.");
+            return false;
+          }
+          return true;
+
+        case 2: // Location
+          if (
+            !appState.locationObtained &&
+            !getInputValue("manualLocation").trim()
+          ) {
+            showError(
+              "manualLocation",
+              "Please enter your location or use the geolocation button."
+            );
+            return false;
+          }
+          return true;
+
+        case 3: // Crop & soil
+          if (!getInputValue("crop").trim()) {
+            showError("crop", "Please tell us what you're growing.");
+            return false;
+          }
+          if (!getInputValue("soil")) {
+            showError("soil", "Please select a soil type.");
+            return false;
+          }
+          return true;
+
+        case 4: // Symptoms
+          if (appState.formData.symptoms.length === 0) {
+            showError("symptoms-group", "Please select at least one symptom.");
+            return false;
+          }
+          return true;
+
+        case 5: // Fertiliser
+          // This step is optional but recommended
+          return true;
+
+        case 6: // Image
+          if (!appState.imageSelected) {
+            showError("file-upload-group", "Please upload a photo of the affected plant.");
+            return false;
+          }
+          return true;
+
+        default:
+          return true;
+      }
+    }
+
+    function saveFormData() {
+      appState.formData.name = getInputValue("name");
+      appState.formData.email = getInputValue("email");
+      appState.formData.phone = getInputValue("phone");
+      appState.formData.crop = getInputValue("crop");
+      appState.formData.soil = getInputValue("soil");
+      appState.formData.manualLocation = getInputValue("manualLocation");
+      appState.formData.otherSymptoms = getInputValue("otherSymptoms");
+      appState.formData.fertiliserUsed = getInputValue("fertiliserUsed");
+      appState.formData.fertiliserName = getInputValue("fertiliserName");
+      appState.formData.fertiliserFrequency = getInputValue("fertiliserFrequency");
+      appState.formData.otherTreatment = getInputValue("otherTreatment");
+
+      // Save symptoms (from checkboxes)
+      appState.formData.symptoms = Array.from(
+        document.querySelectorAll('input[name="symptoms"]:checked')
+      ).map((cb) => cb.value);
+
+      // Save to sessionStorage for persistence
+      sessionStorage.setItem("cropguardai_formdata", JSON.stringify(appState.formData));
+    }
+
+    function restoreFormData() {
+      const saved = sessionStorage.getItem("cropguardai_formdata");
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          appState.formData = { ...appState.formData, ...data };
+
+          // Restore form field values
+          setInputValue("name", appState.formData.name);
+          setInputValue("email", appState.formData.email);
+          setInputValue("phone", appState.formData.phone);
+          setInputValue("crop", appState.formData.crop);
+          setInputValue("soil", appState.formData.soil);
+          setInputValue("manualLocation", appState.formData.manualLocation);
+          setInputValue("otherSymptoms", appState.formData.otherSymptoms);
+          setInputValue("fertiliserUsed", appState.formData.fertiliserUsed);
+          setInputValue("fertiliserName", appState.formData.fertiliserName);
+          setInputValue("fertiliserFrequency", appState.formData.fertiliserFrequency);
+          setInputValue("otherTreatment", appState.formData.otherTreatment);
+
+          // Restore symptom checkboxes
+          appState.formData.symptoms.forEach((symptom) => {
+            const checkbox = document.querySelector(
+              `input[name="symptoms"][value="${symptom}"]`
+            );
+            if (checkbox) {
+              checkbox.checked = true;
+            }
+          });
+        } catch (e) {
+          console.warn("Could not restore form data.", e);
+        }
+      }
+    }
+
+    /* ============================================
+       GEOLOCATION
+       ============================================ */
+    function requestGeolocation() {
+      const btn = document.getElementById("btn-use-location");
+      btn.disabled = true;
+      btn.textContent = "Getting location...";
+
+      if (!navigator.geolocation) {
+        showError("location-group", "Geolocation is not supported by your browser.");
+        btn.disabled = false;
+        btn.textContent = "Use My Location";
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        function (position) {
+          appState.formData.latitude = position.coords.latitude;
+          appState.formData.longitude = position.coords.longitude;
+          appState.locationObtained = true;
+
+          document.getElementById("location-status").innerHTML =
+            '✓ <span style="color: var(--color-success); font-weight: bold;">Location captured</span>';
+
+          btn.disabled = false;
+          btn.textContent = "Use My Location";
+        },
+        function (error) {
+          appState.locationObtained = false;
+          document.getElementById("location-status").innerHTML =
+            'No problem. You can enter your location manually.';
+
+          btn.disabled = false;
+          btn.textContent = "Use My Location";
+        }
+      );
+    }
+
+    /* ============================================
+       IMAGE UPLOAD & QUALITY CHECK
+       ============================================ */
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      // Check file type
+      if (!file.type.match(/^image\/(jpeg|png|webp|gif)|video\/(mp4|webm|quicktime)/)) {
+        showError(
+          "file-upload-group",
+          "Please upload a valid image (JPG, PNG, WebP) or video (MP4, WebM)."
+        );
+        return;
+      }
+
+      // Show loading
+      const uploadBtn = document.getElementById("btn-upload-photo");
+      uploadBtn.disabled = true;
+      uploadBtn.innerHTML = '<span class="spinner"></span> Processing...';
+
+      // Read as base64
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const base64Data = e.target.result.split(",")[1];
+
+        // Validate image quality for image files
+        if (file.type.startsWith("image/")) {
+          const img = new Image();
+          img.onload = function () {
+            if (validateImageQuality(img)) {
+              appState.formData.fileDataBase64 = base64Data;
+              appState.formData.fileName = file.name;
+              appState.formData.fileType = file.type;
+              appState.imageSelected = true;
+
+              document.getElementById("file-upload-status").innerHTML =
+                '✓ <span style="color: var(--color-success); font-weight: bold;">Image ready for analysis</span>';
+              document.getElementById("file-preview").src = e.target.result;
+              document.getElementById("file-preview-container").classList.remove("hidden");
+
+              uploadBtn.disabled = false;
+              uploadBtn.textContent = "Upload Another Photo";
+            } else {
+              appState.imageSelected = false;
+              showError(
+                "file-upload-group",
+                "Image quality needs another look. Please retake the photo in better lighting and move closer to the symptoms."
+              );
+              uploadBtn.disabled = false;
+              uploadBtn.textContent = "Upload Photo";
+            }
+          };
+          img.src = e.target.result;
+        } else {
+          // Video - accept as-is for now
+          appState.formData.fileDataBase64 = base64Data;
+          appState.formData.fileName = file.name;
+          appState.formData.fileType = file.type;
+          appState.imageSelected = true;
+
+          document.getElementById("file-upload-status").innerHTML =
+            '✓ <span style="color: var(--color-success); font-weight: bold;">Video ready for analysis</span>';
+
+          uploadBtn.disabled = false;
+          uploadBtn.textContent = "Upload Another Video";
+        }
+      };
+
+      reader.onerror = function () {
+        showError("file-upload-group", "Could not read file. Please try again.");
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = "Upload Photo";
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    function validateImageQuality(img) {
+      const width = img.naturalWidth;
+      const height = img.naturalHeight;
+
+      // Check minimum dimensions
+      if (width < 200 || height < 200) {
+        return false;
+      }
+
+      // Check aspect ratio isn't extreme (portrait/landscape okay, but not like a sliver)
+      const aspectRatio = Math.max(width, height) / Math.min(width, height);
+      if (aspectRatio > 5) {
+        return false;
+      }
+
+      // Create canvas to check brightness
+      const canvas = document.createElement("canvas");
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0);
+
+      const imageData = ctx.getImageData(0, 0, img.width, img.height);
+      const data = imageData.data;
+
+      let brightness = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        brightness += (data[i] + data[i + 1] + data[i + 2]) / 3;
+      }
+      brightness = brightness / (img.width * img.height);
+
+      // Check if too dark or too bright
+      if (brightness < 30 || brightness > 240) {
+        return false;
+      }
+
+      return true;
+    }
+
+    function activateCamera() {
+      alert(
+        "Camera functionality requires HTTPS and proper browser support. Please use the file upload option or test on a deployed site."
+      );
+    }
+
+    function resetImageSelection() {
+      appState.imageSelected = false;
+      appState.formData.fileDataBase64 = "";
+      appState.formData.fileName = "";
+      appState.formData.fileType = "";
+
+      document.getElementById("file-upload").value = "";
+      document.getElementById("file-upload-status").innerHTML = "";
+      document.getElementById("file-preview-container").classList.add("hidden");
+      clearErrors();
+    }
+
+    /* ============================================
+       ANALYSIS & RESULTS
+       ============================================ */
+    function analyzeAndShowResults() {
+      saveFormData();
+
+      appState.isAnalyzing = true;
+      const wizardBody = document.querySelector(".wizard-body");
+      wizardBody.innerHTML = '<div class="spinner" style="margin: 2rem auto;"></div> Analyzing plant health...';
+
+      // Submit form data to Google Apps Script
+      submitToGoogleAppsScript(function (scriptSuccess) {
+        // For now, generate mock results
+        // In production, you would call your FastAPI endpoint here
+        generateMockResults(function () {
+          appState.isAnalyzing = false;
+          displayResults();
+        });
+      });
+    }
+
+    function submitToGoogleAppsScript(callback) {
+      const payload = {
+        name: appState.formData.name,
+        email: appState.formData.email,
+        phone: appState.formData.phone,
+        latitude: appState.formData.latitude,
+        longitude: appState.formData.longitude,
+        manualLocation: appState.formData.manualLocation,
+        crop: appState.formData.crop,
+        soil: appState.formData.soil,
+        symptoms: appState.formData.symptoms.join(", "),
+        otherSymptoms: appState.formData.otherSymptoms,
+        fertiliserUsed: appState.formData.fertiliserUsed,
+        fertiliserName: appState.formData.fertiliserName,
+        fertiliserFrequency: appState.formData.fertiliserFrequency,
+        otherTreatment: appState.formData.otherTreatment,
+        fileName: appState.formData.fileName,
+        fileType: appState.formData.fileType,
+        // File data will be sent if present
+        fileDataBase64: appState.formData.fileDataBase64 || undefined,
+      };
+
+      // Use POST with JSON body if there's a file
+      if (appState.formData.fileDataBase64) {
+        fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify(payload),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then(() => {
+            console.log("Form submitted with file to Google Apps Script");
+            callback(true);
+          })
+          .catch((err) => {
+            console.warn("Could not submit to Apps Script:", err);
+            callback(true); // Continue anyway
+          });
+      } else {
+        // Use GET for no-cors compatibility if no file
+        const params = new URLSearchParams(payload);
+        fetch(SCRIPT_URL + "?" + params.toString(), { method: "GET" })
+          .then(() => {
+            console.log("Form submitted to Google Apps Script");
+            callback(true);
+          })
+          .catch((err) => {
+            console.warn("Could not submit to Apps Script:", err);
+            callback(true); // Continue anyway
+          });
+      }
+    }
+
+    function generateMockResults(callback) {
+      // In production, this would call your FastAPI endpoint
+      // For now, generate realistic mock results based on symptoms
+      const possibleDiseases = [
+        "Early Blight (Alternaria solani)",
+        "Leaf Spot (Cercospora)",
+        "Powdery Mildew",
+        "Blossom End Rot",
+        "Fusarium Wilt",
+        "Nutrient Deficiency",
+      ];
+
+      const selectedDisease =
+        possibleDiseases[Math.floor(Math.random() * possibleDiseases.length)];
+      const confidence = Math.floor(Math.random() * 40) + 60; // 60-100%
+      const severity = ["Mild", "Moderate", "Severe"][
+        Math.floor(Math.random() * 3)
+      ];
+
+      appState.analysisResult = {
+        possibleDisease: selectedDisease,
+        confidence: confidence + "%",
+        severity: severity,
+        possibleCauses: [
+          "Environmental stress",
+          "Watering issues",
+          "Soil-related problems",
+          "Nutrient imbalance",
+        ],
+        treatment: [
+          "Apply fungicide spray every 7-10 days",
+          "Improve air circulation by pruning",
+          "Water at soil level only, avoid wetting leaves",
+        ],
+        prevention: [
+          "Monitor plants regularly",
+          "Remove severely affected leaves",
+          "Maintain proper spacing between plants",
+          "Keep tools clean to prevent spread",
+        ],
+        naturalAlternatives: [
+          "Neem oil spray (5-10% concentration)",
+          "Copper fungicide (organic certified)",
+          "Sulfur dust for powdery mildew",
+          "Better watering practices and mulching",
+        ],
+      };
+
+      // Simulate API delay
+      setTimeout(callback, 2000);
+    }
+
+    function displayResults() {
+      const result = appState.analysisResult;
+      const wizardBody = document.querySelector(".wizard-body");
+      const severityClass =
+        result.severity === "Mild"
+          ? "severity-mild"
+          : result.severity === "Moderate"
+            ? "severity-moderate"
+            : "severity-severe";
+
+      let resultsHTML = `
+        <div class="results-container">
+          <h2 style="color: var(--color-forest-green); text-align: center; margin-bottom: var(--spacing-xl);">
+            Here's what we found
+          </h2>
+
+          <div class="result-card">
+            <div class="result-label">AI-Assisted Result</div>
+            <div class="result-value" style="color: var(--color-forest-green);">${result.possibleDisease}</div>
+          </div>
+
+          <div class="recommendation-box">
+            <h4>Confidence Level</h4>
+            <p>${result.confidence}</p>
+            <p class="text-small" style="margin-top: var(--spacing-sm);">
+              ⓘ This is an AI-assisted assessment and should not replace professional agricultural advice, especially for severe cases.
+            </p>
+          </div>
+
+          <div class="recommendation-box">
+            <h4>Severity</h4>
+            <p style="font-weight: bold;" class="${severityClass}">
+              ${result.severity === "Mild" ? "🟢" : result.severity === "Moderate" ? "🟠" : "🔴"} ${result.severity}
+            </p>
+          </div>
+
+          <h3 style="margin-top: var(--spacing-xl); color: var(--color-forest-green);">Possible Causes</h3>
+          <ul style="margin-left: var(--spacing-lg); line-height: 1.8;">
+            ${result.possibleCauses.map((c) => `<li>• ${c}</li>`).join("")}
+          </ul>
+
+          <h3 style="margin-top: var(--spacing-xl); color: var(--color-forest-green);">What Should You Do Next?</h3>
+          <div class="recommendations">
+            <div class="recommendation-box">
+              <h4>Recommended Treatment</h4>
+              <ul style="margin-left: var(--spacing-md); line-height: 1.6;">
+                ${result.treatment.map((t) => `<li style="margin-bottom: var(--spacing-sm);">• ${t}</li>`).join("")}
+              </ul>
+            </div>
+            <div class="recommendation-box">
+              <h4>Safety Information</h4>
+              <ul style="margin-left: var(--spacing-md); line-height: 1.6;">
+                <li style="margin-bottom: var(--spacing-sm);">• Always wear PPE (gloves, mask) when spraying</li>
+                <li style="margin-bottom: var(--spacing-sm);">• Follow pre-harvest intervals strictly</li>
+                <li style="margin-bottom: var(--spacing-sm);">• Do not apply during extreme heat</li>
+                <li>• Keep children and pets away during treatment</li>
+              </ul>
+            </div>
+          </div>
+
+          <h3 style="margin-top: var(--spacing-xl); color: var(--color-forest-green);">Prefer a More Natural Approach?</h3>
+          <ul style="margin-left: var(--spacing-lg); line-height: 1.8;">
+            ${result.naturalAlternatives.map((n) => `<li>• ${n}</li>`).join("")}
+          </ul>
+
+          <h3 style="margin-top: var(--spacing-xl); color: var(--color-forest-green);">Protect Your Plant Going Forward</h3>
+          <ul style="margin-left: var(--spacing-lg); line-height: 1.8;">
+            <li>• Monitor plants regularly for early signs</li>
+            <li>• Remove severely affected plant parts</li>
+            <li>• Avoid unnecessary overwatering</li>
+            <li>• Maintain proper plant spacing and airflow</li>
+            <li>• Monitor nearby plants for spread</li>
+            <li>• Keep tools clean between uses</li>
+            <li>• Follow treatment instructions exactly</li>
+          </ul>
+
+          <div style="background-color: var(--color-light-green); padding: var(--spacing-lg); border-radius: var(--radius-md); margin-top: var(--spacing-xl);">
+            <p class="text-small">
+              <strong>Disclaimer:</strong> CropGuardAI provides AI-assisted plant health information for guidance and educational purposes.
+              Results may not always be accurate and should not replace professional agricultural advice, particularly for severe or uncertain cases.
+            </p>
+          </div>
+        </div>
+      `;
+
+      wizardBody.innerHTML = resultsHTML;
+
+      // Update footer buttons
+      const wizardFooter = document.querySelector(".wizard-footer");
+      wizardFooter.innerHTML = `
+        <button id="btn-new-assessment" class="btn btn-primary btn-block">
+          Start New Assessment
+        </button>
+      `;
+
+      document.getElementById("btn-new-assessment").addEventListener("click", startNewAssessment);
+    }
+
+    function startNewAssessment() {
+      // Clear session storage
+      sessionStorage.removeItem("cropguardai_formdata");
+
+      // Reset state
+      appState.currentStep = 1;
+      appState.imageSelected = false;
+      appState.locationObtained = false;
+      appState.analysisResult = null;
+      appState.formData = {
+        name: "",
+        email: "",
+        phone: "",
+        latitude: "",
+        longitude: "",
+        manualLocation: "",
+        crop: "",
+        soil: "",
+        symptoms: [],
+        otherSymptoms: "",
+        fertiliserUsed: "",
+        fertiliserName: "",
+        fertiliserFrequency: "",
+        otherTreatment: "",
+        fileName: "",
+        fileType: "",
+        fileDataBase64: "",
+      };
+
+      // Show landing page
+      document.getElementById("wizard-container").classList.add("hidden");
+      document.getElementById("landing-page").classList.remove("hidden");
+      window.scrollTo(0, 0);
+    }
+
+    /* ============================================
+       FAQ ACCORDION
+       ============================================ */
+    function toggleFaqItem(event) {
+      const button = event.currentTarget;
+      const content = button.nextElementSibling;
+
+      button.classList.toggle("active");
+      content.classList.toggle("active");
+    }
+
+    /* ============================================
+       UTILITY FUNCTIONS
+       ============================================ */
+    function getInputValue(id) {
+      return document.getElementById(id)?.value || "";
+    }
+
+    function setInputValue(id, value) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.value = value;
+      }
+    }
+
+    function showError(fieldId, message) {
+      let container = document.getElementById(fieldId);
+      if (!container) {
+        // Try to find parent form-group
+        const input = document.getElementById(fieldId);
+        if (input) {
+          container = input.closest(".form-group") || input.parentElement;
+        }
+      }
+
+      if (container) {
+        const errorEl = container.querySelector(".form-error") ||
+          document.createElement("div");
+        errorEl.className = "form-error";
+        errorEl.textContent = message;
+        if (!container.querySelector(".form-error")) {
+          container.appendChild(errorEl);
+        }
+      }
+    }
+
+    function clearErrors() {
+      document.querySelectorAll(".form-error").forEach((el) => {
+        el.remove();
+      });
+    }
+
+    function isValidEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
+    }
+
+    function scrollToHowItWorks() {
+      document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" });
+    }
+  </script>
+</head>
+<body>
+  <!-- ============================================
+       HEADER / NAVIGATION
+       ============================================ -->
+  <header>
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">
+          🌱 CropGuardAI
+        </div>
+        <nav>
+          <a href="#home">Home</a>
+          <a href="#how-it-works">How It Works</a>
+          <a href="#features">Features</a>
+          <a href="#faq">FAQ</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================================
+       LANDING PAGE
+       ============================================ -->
+  <div id="landing-page">
+    <!-- Hero Section -->
+    <section class="hero section" id="home">
+      <div class="container">
+        <div class="hero-content">
+          <h1>Something's wrong with your plant?<br/>Let's find out why.</h1>
+          <p>
+            Upload a clear photo, tell us what you're noticing, and get AI-assisted guidance on possible
+            diseases, causes, treatment and prevention.
+          </p>
+          <div class="hero-cta">
+            <button id="btn-check-plant" class="btn btn-primary">Check My Plant</button>
+            <button id="btn-how-it-works" class="btn btn-secondary">See How It Works</button>
+          </div>
+
+          <div class="trust-indicators">
+            <div class="trust-item">✓ Photo analysis</div>
+            <div class="trust-item">✓ Location-aware guidance</div>
+            <div class="trust-item">✓ Practical next steps</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works section" id="how-it-works">
+      <div class="container">
+        <div style="text-align: center; margin-bottom: var(--spacing-2xl);">
+          <p style="color: var(--color-secondary-green); font-weight: var(--font-weight-semibold); margin-bottom: var(--spacing-sm);">
+            WORKFLOW
+          </p>
+          <h2>How CropGuardAI Works</h2>
+          <p>
+            A simple, step-by-step process to understand your plant's health and get actionable guidance.
+          </p>
+        </div>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-number">1</div>
+            <h3>Share the Basics</h3>
+            <p>
+              Specify your location, soil type, and crop variety to ground predictions in local agro-climatic
+              conditions.
+            </p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">2</div>
+            <h3>Show Us the Plant</h3>
+            <p>
+              Snap a photo or upload video with built-in quality checks to ensure clear visibility of symptoms.
+            </p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">3</div>
+            <h3>Understand the Problem</h3>
+            <p>
+              Receive pathogen probability scores, symptom severity ratings, and likely environmental stress
+              factors.
+            </p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">4</div>
+            <h3>Know What to Do</h3>
+            <p>
+              Clear agronomic protocols covering bio-controls, chemical treatments with PPE rules, and long-term
+              prevention.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="section" id="features">
+      <div class="container">
+        <div style="text-align: center; margin-bottom: var(--spacing-2xl);">
+          <p style="color: var(--color-secondary-green); font-weight: var(--font-weight-semibold); margin-bottom: var(--spacing-sm);">
+            FEATURES
+          </p>
+          <h2>Why Farmers Trust CropGuardAI</h2>
+          <p>
+            Built specifically for Indian agriculture with local expertise, safety-first protocols, and
+            natural alternatives.
+          </p>
+        </div>
+
+        <div class="steps-grid">
+          <div class="card">
+            <h3 style="color: var(--color-forest-green);">📍 Local Context</h3>
+            <p>
+              Integrates micro-climate humidity, historical regional crop blights, and monsoon patterns for
+              regionally accurate advice.
+            </p>
+          </div>
+
+          <div class="card">
+            <h3 style="color: var(--color-forest-green);">💧 Input-Aware Guidance</h3>
+            <p>
+              Accounts for what fertilisers and chemicals you've already applied to prevent dangerous chemical
+              stacking or root burning.
+            </p>
+          </div>
+
+          <div class="card">
+            <h3 style="color: var(--color-forest-green);">🌿 Prevention First</h3>
+            <p>
+              Emphasizes cultural management, pruning geometry, soil aeration, and drip adjustments before
+              defaulting to harsh synthetics.
+            </p>
+          </div>
+
+          <div class="card">
+            <h3 style="color: var(--color-forest-green);">🍃 Natural Alternatives</h3>
+            <p>
+              Provides organic IPM (Integrated Pest Management) biological controls and botanical decoctions
+              alongside certified remedies.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="section" style="background-color: var(--color-white);">
+      <div class="container">
+        <div style="text-align: center; margin-bottom: var(--spacing-2xl);">
+          <p style="color: var(--color-secondary-green); font-weight: var(--font-weight-semibold); margin-bottom: var(--spacing-sm);">
+            TRUST
+          </p>
+          <h2>Farmer Success Stories</h2>
+        </div>
+
+        <div class="testimonials-grid">
+          <div class="testimonial-card">
+            <div class="testimonial-label">Example Feedback</div>
+            <div class="stars">★★★★★</div>
+            <p class="testimonial-text">
+              "Saved 4 acres of bell peppers during unseasonal rains. The tool flagged Phytophthora crown rot
+              two days before it would have spread."
+            </p>
+            <div class="testimonial-author">Rajesh Kumar</div>
+            <div class="testimonial-role">Vegetable Farmer, Maharashtra</div>
+          </div>
+
+          <div class="testimonial-card">
+            <div class="testimonial-label">Example Feedback</div>
+            <div class="stars">★★★★★</div>
+            <p class="testimonial-text">
+              "As an urban rooftop gardener, I was overdosing my heirloom tomatoes with chemical sprays.
+              CropGuardAI showed me simple neem dilution and pruning was all I needed."
+            </p>
+            <div class="testimonial-author">Meera Singh</div>
+            <div class="testimonial-role">Urban Gardener, Delhi</div>
+          </div>
+
+          <div class="testimonial-card">
+            <div class="testimonial-label">Example Feedback</div>
+            <div class="stars">★★★★★</div>
+            <p class="testimonial-text">
+              "The safety warnings and PPE precautions are what make this standout. Too many apps recommend
+              generic chemicals without pre-harvest intervals."
+            </p>
+            <div class="testimonial-author">Arjun Patel</div>
+            <div class="testimonial-role">Commercial Farmer, Gujarat</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="section" id="faq">
+      <div class="container">
+        <div style="text-align: center; margin-bottom: var(--spacing-2xl);">
+          <p style="color: var(--color-secondary-green); font-weight: var(--font-weight-semibold); margin-bottom: var(--spacing-sm);">
+            QUESTIONS
+          </p>
+          <h2>Frequently Asked Questions</h2>
+          <p>Everything you need to know about using CropGuardAI.</p>
+        </div>
+
+        <div class="faq-container">
+          <div class="faq-item">
+            <button class="faq-button">
+              <span>What can I upload?</span>
+              <span class="faq-toggle">▼</span>
+            </button>
+            <div class="faq-content">
+              <div class="faq-text">
+                You can upload clear, well-lit photos (JPG, PNG, WebP) or videos (MP4, WebM) of the affected
+                plant. Zoom in on the damaged leaf, stem, fruit, or visible pest. For best results, use good
+                lighting and position the camera close to the affected area.
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-button">
+              <span>What if my photo is blurry?</span>
+              <span class="faq-toggle">▼</span>
+            </button>
+            <div class="faq-content">
+              <div class="faq-text">
+                If your photo is too blurry, too dark, or too bright, CropGuardAI will ask you to retake it.
+                Move closer to the affected area, use better lighting, and ensure the camera is steady. A clear,
+                well-focused image gives much better results.
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-button">
+              <span>Do I have to share my location?</span>
+              <span class="faq-toggle">▼</span>
+            </button>
+            <div class="faq-content">
+              <div class="faq-text">
+                No. If you don't want to use the browser's location feature, you can manually enter your
+                location (village, district, state). Either way helps us provide region-appropriate guidance.
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-button">
+              <span>Can CropGuardAI identify every plant disease?</span>
+              <span class="faq-toggle">▼</span>
+            </button>
+            <div class="faq-content">
+              <div class="faq-text">
+                No. CropGuardAI provides AI-assisted analysis, not professional diagnosis. It works best for
+                common crop diseases but may not identify rare, emerging, or complex conditions. Always consult a
+                local agronomist for uncertain or severe cases.
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-button">
+              <span>What if I don't know my soil type?</span>
+              <span class="faq-toggle">▼</span>
+            </button>
+            <div class="faq-content">
+              <div class="faq-text">
+                That's fine—select "Not sure" and the tool will still provide useful guidance. If you want to
+                learn your soil type, contact your local agricultural extension office for a soil test.
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-button">
+              <span>Are natural treatments always safe?</span>
+              <span class="faq-toggle">▼</span>
+            </button>
+            <div class="faq-content">
+              <div class="faq-text">
+                No. Even natural treatments (neem oil, sulfur, copper) require careful handling. Always follow
+                dosage instructions, wear appropriate PPE, and check pre-harvest intervals. Never assume "natural"
+                means "always safe."
+              </div>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-button">
+              <span>Does CropGuardAI replace an agricultural expert?</span>
+              <span class="faq-toggle">▼</span>
+            </button>
+            <div class="faq-content">
+              <div class="faq-text">
+                No. CropGuardAI is a guidance tool, not a replacement for professional advice. For severe
+                infestations, unusual symptoms, or crops with high commercial value, consult your local extension
+                officer or an agronomist.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Final CTA Banner -->
+    <section style="background: linear-gradient(135deg, var(--color-forest-green) 0%, var(--color-secondary-green) 100%); color: white; padding: var(--spacing-2xl) 0;">
+      <div class="container" style="text-align: center;">
+        <h2 style="color: white; margin-bottom: var(--spacing-md);">Ready to Protect Your Crops?</h2>
+        <p style="color: rgba(255,255,255,0.9); font-size: var(--font-size-lg); margin-bottom: var(--spacing-xl);">
+          Start your free plant health assessment right now. No sign-up required.
+        </p>
+        <button id="btn-check-plant-cta" class="btn" style="background-color: white; color: var(--color-forest-green); padding: var(--spacing-md) var(--spacing-2xl); font-size: var(--font-size-lg); font-weight: var(--font-weight-bold);">
+          Check My Plant
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============================================
+       WIZARD / ASSESSMENT FLOW
+       ============================================ -->
+  <div id="wizard-container" class="hidden section">
+    <div class="container wizard-container">
+      <div class="card">
+        <!-- Wizard Header -->
+        <div class="wizard-header">
+          <div class="step-indicator">Step 1 of 6</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: 16.67%;"></div>
+          </div>
+        </div>
+
+        <!-- Wizard Body -->
+        <div class="wizard-body">
+          <!-- Step 1: Personal Details -->
+          <div id="step-1" class="wizard-step">
+            <h3 style="color: var(--color-forest-green);">Farmer & Grower Credentials</h3>
+            <p style="margin-bottom: var(--spacing-lg);">
+              We use this to send diagnostic telemetry and agronomic spray records.
+            </p>
+
+            <div class="form-group">
+              <label for="name">Full Name *</label>
+              <input type="text" id="name" placeholder="e.g. Rajesh Patel" />
+            </div>
+
+            <div class="form-group">
+              <label for="phone">Phone Number *</label>
+              <input type="tel" id="phone" placeholder="e.g. 98765 43210" />
+            </div>
+
+            <div class="form-group">
+              <label for="email">Email Address (Optional)</label>
+              <input type="email" id="email" placeholder="rajesh.farm@agrimail.in" />
+            </div>
+          </div>
+
+          <!-- Step 2: Location -->
+          <div id="step-2" class="wizard-step hidden">
+            <h3 style="color: var(--color-forest-green);">Where is your plant growing?</h3>
+            <p style="margin-bottom: var(--spacing-lg);">
+              Your location can help narrow down possible diseases and causes because plant problems can vary with
+              region, climate and growing conditions.
+            </p>
+
+            <div class="form-group">
+              <button id="btn-use-location" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                Use My Location
+              </button>
+              <div id="location-status" style="margin-top: var(--spacing-sm); font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+              </div>
+            </div>
+
+            <p style="text-align: center; margin: var(--spacing-md) 0; color: var(--color-text-secondary);">
+              — or —
+            </p>
+
+            <div class="form-group">
+              <label for="manualLocation">Village / Town, District, State</label>
+              <input
+                type="text"
+                id="manualLocation"
+                placeholder="e.g. Belgaum, Karnataka"
+              />
+            </div>
+          </div>
+
+          <!-- Step 3: Crop & Soil -->
+          <div id="step-3" class="wizard-step hidden">
+            <h3 style="color: var(--color-forest-green);">What are you growing?</h3>
+
+            <div class="form-group">
+              <label for="crop">Crop / Plant *</label>
+              <input type="text" id="crop" placeholder="e.g. Tomato" />
+            </div>
+
+            <div class="form-group">
+              <label for="soil">Soil Type *</label>
+              <select id="soil">
+                <option value="">— Select —</option>
+                <option value="Loamy">Loamy</option>
+                <option value="Clay">Clay</option>
+                <option value="Sandy">Sandy</option>
+                <option value="Black soil">Black soil</option>
+                <option value="Red soil">Red soil</option>
+                <option value="Not sure">Not sure</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Step 4: Symptoms -->
+          <div id="step-4" class="wizard-step hidden">
+            <h3 style="color: var(--color-forest-green);">What are you noticing?</h3>
+            <p style="margin-bottom: var(--spacing-lg);">Select every symptom that applies.</p>
+
+            <div id="symptoms-group" class="form-group">
+              <div class="checkbox-group">
+                <div class="checkbox-item">
+                  <input type="checkbox" id="symptom-yellowing" name="symptoms" value="Yellowing leaves" />
+                  <label for="symptom-yellowing">🍂 Yellowing leaves</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="symptom-brown" name="symptoms" value="Brown spots" />
+                  <label for="symptom-brown">🟤 Brown spots</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="symptom-black" name="symptoms" value="Black spots" />
+                  <label for="symptom-black">⚫ Black spots</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="symptom-wilting" name="symptoms" value="Wilting" />
+                  <label for="symptom-wilting">🌿 Wilting</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="symptom-curling" name="symptoms" value="Curling leaves" />
+                  <label for="symptom-curling">🌀 Curling leaves</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="symptom-insects" name="symptoms" value="Insects or pests" />
+                  <label for="symptom-insects">🐛 Insects / pests</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="symptom-stunted" name="symptoms" value="Stunted growth" />
+                  <label for="symptom-stunted">📉 Stunted growth</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="symptom-rot" name="symptoms" value="Rot or unusual moisture" />
+                  <label for="symptom-rot">💧 Rot / unusual moisture</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="symptom-poor" name="symptoms" value="Poor growth" />
+                  <label for="symptom-poor">🌱 Poor growth</label>
+                </div>
+                <div class="checkbox-item">
+                  <input type="checkbox" id="symptom-discoloration" name="symptoms" value="Leaf discoloration" />
+                  <label for="symptom-discoloration">🍃 Leaf discoloration</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="otherSymptoms">Describe anything else you've noticed</label>
+              <textarea id="otherSymptoms" placeholder="Any other observations..."></textarea>
+            </div>
+          </div>
+
+          <!-- Step 5: Fertiliser -->
+          <div id="step-5" class="wizard-step hidden">
+            <h3 style="color: var(--color-forest-green);">What have you already used on the plant?</h3>
+
+            <div class="form-group">
+              <label for="fertiliserUsed">Fertiliser Used</label>
+              <select id="fertiliserUsed">
+                <option value="">— Select —</option>
+                <option value="None">None</option>
+                <option value="Organic fertiliser">Organic fertiliser</option>
+                <option value="Chemical fertiliser">Chemical fertiliser</option>
+                <option value="Both">Both</option>
+                <option value="Not sure">Not sure</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="fertiliserName">Fertiliser Name (if known)</label>
+              <input type="text" id="fertiliserName" placeholder="e.g. NPK 10-26-26" />
+            </div>
+
+            <div class="form-group">
+              <label for="fertiliserFrequency">Application Frequency</label>
+              <select id="fertiliserFrequency">
+                <option value="">— Select —</option>
+                <option value="Occasionally">Occasionally</option>
+                <option value="Weekly">Weekly</option>
+                <option value="Every 2-4 weeks">Every 2–4 weeks</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="otherTreatment">Other Treatment Used</label>
+              <input type="text" id="otherTreatment" placeholder="e.g. Neem spray, Sulfur dust" />
+            </div>
+
+            <p class="text-small text-muted" style="margin-top: var(--spacing-lg);">
+              ℹ️ This helps us avoid recommending treatments that might conflict with what you've already applied.
+            </p>
+          </div>
+
+          <!-- Step 6: Image Upload -->
+          <div id="step-6" class="wizard-step hidden">
+            <h3 style="color: var(--color-forest-green);">Show us the affected plant</h3>
+            <p style="margin-bottom: var(--spacing-lg);">
+              A clear, well-lit image gives the system more useful information.
+            </p>
+
+            <div id="file-upload-group" class="form-group">
+              <input
+                type="file"
+                id="file-upload"
+                accept="image/*,video/*"
+                style="display: none;"
+              />
+
+              <div style="display: flex; flex-direction: column; gap: var(--spacing-md);">
+                <button id="btn-upload-photo" type="button" class="btn btn-primary" style="width: 100%; justify-content: center;">
+                  📷 Upload Photo
+                </button>
+                <button id="btn-use-camera" type="button" class="btn btn-secondary" style="width: 100%; justify-content: center;">
+                  📹 Use Live Camera
+                </button>
+              </div>
+
+              <div id="file-upload-status" style="margin-top: var(--spacing-sm); font-size: var(--font-size-sm); color: var(--color-text-secondary);">
+              </div>
+
+              <div id="file-preview-container" class="hidden" style="margin-top: var(--spacing-lg);">
+                <img
+                  id="file-preview"
+                  style="max-width: 100%; border-radius: var(--radius-md); border: 1px solid var(--color-border); margin-bottom: var(--spacing-sm);"
+                />
+                <button id="btn-retake-photo" type="button" class="btn btn-secondary" style="width: 100%; justify-content: center;">
+                  Retake Photo
+                </button>
+              </div>
+            </div>
+
+            <p class="text-small text-muted" style="margin-top: var(--spacing-lg);">
+              💡 For better results, move closer to the affected area and use good lighting. Avoid uploading a
+              whole field—focus on the specific leaf, stem, or symptom.
+            </p>
+          </div>
+        </div>
+
+        <!-- Wizard Footer -->
+        <div class="wizard-footer">
+          <button id="btn-wizard-back" class="btn btn-secondary" style="display: none;">← Back</button>
+          <button id="btn-wizard-continue" class="btn btn-primary">Continue</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       FOOTER
+       ============================================ -->
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>🌱 CropGuardAI</h4>
+          <p style="margin-bottom: var(--spacing-md);">
+            Smarter plant health.<br/>Better decisions.<br/>Healthier crops.
+          </p>
+        </div>
+
+        <div class="footer-section">
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="#home">Home</a></li>
+            <li><a href="#how-it-works">How It Works</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#faq">FAQ</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4>Legal</h4>
+          <ul>
+            <li><a href="#privacy">Privacy Policy</a></li>
+            <li><a href="#terms">Terms of Use</a></li>
+            <li><a href="#disclaimer">Disclaimer</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-section">
+          <h4>Contact</h4>
+          <p>📧 support@cropguardai.com</p>
+          <p>📞 1800-CROPGUARD (2767 8427)</p>
+          <p>📍 Pan-India Service</p>
+        </div>
+      </div>
+
+      <div class="footer-divider"></div>
+
+      <div class="disclaimer">
+        <strong>Disclaimer:</strong> CropGuardAI provides AI-assisted plant health information for guidance and
+        educational purposes. Results may not always be accurate and should not replace professional agricultural
+        advice, particularly for severe or uncertain cases. Always consult your local agricultural extension officer
+        or an agronomist for crops with high commercial value or unusual symptoms. Pre-harvest intervals and safety
+        protocols must be strictly followed.
+      </div>
+
+      <div class="footer-bottom">
+        <p>&copy; 2024 CropGuardAI. All rights reserved. | Empowering farmers with technology & nature.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Re-attach event listener for final CTA button
+    document.getElementById("btn-check-plant-cta")?.addEventListener("click", startAssessment);
+  </script>
+</body>
+</html>

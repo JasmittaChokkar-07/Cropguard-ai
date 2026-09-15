@@ -1157,12 +1157,22 @@
           }
           return true;
 
-        case 4: // Symptoms
-          if (appState.formData.symptoms.length === 0) {
-            showError("symptoms-group", "Please select at least one symptom.");
-            return false;
-          }
-          return true;
+       case 4: // Symptoms
+  const selectedSymptoms = document.querySelectorAll(
+    'input[name="symptoms"]:checked'
+  );
+
+  if (selectedSymptoms.length === 0) {
+    showError("symptoms-group", "Please select at least one symptom.");
+    return false;
+  }
+
+  // Save the selected symptoms immediately
+  appState.formData.symptoms = Array.from(selectedSymptoms).map(
+    (checkbox) => checkbox.value
+  );
+
+  return true;
 
         case 5: // Fertiliser
           // This step is optional but recommended

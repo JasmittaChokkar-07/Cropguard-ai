@@ -1646,10 +1646,8 @@
     }
 
 function startNewAssessment() {
-  // Clear the previous assessment data
   sessionStorage.removeItem("cropguardai_formdata");
 
-  // Reset all application state
   appState.currentStep = 1;
   appState.imageSelected = false;
   appState.locationObtained = false;
@@ -1675,13 +1673,8 @@ function startNewAssessment() {
     fileDataBase64: ""
   };
 
-  // Reload the page completely.
-  // This restores the original Step 1 HTML
-  // instead of showing the previous analysis result.
-  window.location.reload();
+  window.location.href = window.location.pathname;
 }
-```
-
       // Show landing page
       document.getElementById("wizard-container").classList.add("hidden");
       document.getElementById("landing-page").classList.remove("hidden");

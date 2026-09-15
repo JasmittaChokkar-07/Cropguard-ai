@@ -1644,35 +1644,43 @@
 
       document.getElementById("btn-new-assessment").addEventListener("click", startNewAssessment);
     }
+```javascript
+function startNewAssessment() {
+  // Clear the previous assessment data
+  sessionStorage.removeItem("cropguardai_formdata");
 
-    function startNewAssessment() {
-      // Clear session storage
-      sessionStorage.removeItem("cropguardai_formdata");
+  // Reset all application state
+  appState.currentStep = 1;
+  appState.imageSelected = false;
+  appState.locationObtained = false;
+  appState.analysisResult = null;
 
-      // Reset state
-      appState.currentStep = 1;
-      appState.imageSelected = false;
-      appState.locationObtained = false;
-      appState.analysisResult = null;
-      appState.formData = {
-        name: "",
-        email: "",
-        phone: "",
-        latitude: "",
-        longitude: "",
-        manualLocation: "",
-        crop: "",
-        soil: "",
-        symptoms: [],
-        otherSymptoms: "",
-        fertiliserUsed: "",
-        fertiliserName: "",
-        fertiliserFrequency: "",
-        otherTreatment: "",
-        fileName: "",
-        fileType: "",
-        fileDataBase64: "",
-      };
+  appState.formData = {
+    name: "",
+    email: "",
+    phone: "",
+    latitude: "",
+    longitude: "",
+    manualLocation: "",
+    crop: "",
+    soil: "",
+    symptoms: [],
+    otherSymptoms: "",
+    fertiliserUsed: "",
+    fertiliserName: "",
+    fertiliserFrequency: "",
+    otherTreatment: "",
+    fileName: "",
+    fileType: "",
+    fileDataBase64: ""
+  };
+
+  // Reload the page completely.
+  // This restores the original Step 1 HTML
+  // instead of showing the previous analysis result.
+  window.location.reload();
+}
+```
 
       // Show landing page
       document.getElementById("wizard-container").classList.add("hidden");
